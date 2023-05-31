@@ -62,11 +62,13 @@ router.get("/login", async (req, res) => {
 });
 
 function verifyToken(req, res, next) {
-  const bearedHeader = req.headers["authorization"];
+  const bearerHeader = req.headers["authorization"];
 
-  if (typeof bearedHeader !== undefined) {
-    const bearer = bearedHeader.split(" ");
+  if (typeof bearerHeader !== undefined) {
+    const bearer = bearerHeader.split(" ");
     const token = bearer[1];
+
+    console.log('bearer',bearer);
 
     req.token = token;
     next();
@@ -81,7 +83,7 @@ router.post("/profile", verifyToken, (req, res) => {
     if (err) {
       res.send({ result: "invalid token" });
     } else {
-      console.log(authData.userData);
+      // console.log(authData.userData);
       res.json({ message: "profile accessed", authData });
     }
   });
