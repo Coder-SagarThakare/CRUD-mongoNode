@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const userDB = require("../model/user");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const secretKey = "secretKey";
 
 router.post("/registration", async (req, res) => {
   async function getHashedPassword(password) {
@@ -24,20 +26,6 @@ router.post("/registration", async (req, res) => {
   }
 });
 
-// router.get("/login", async (req, res) => {
-//   try {
-//     const userData = await userDB.findOne({ email: req.body.email });
-//     if (!userData) {
-//       res.send("User not registered");
-//     } else {
-//       if (userData.password == req.body.password) res.send(userData);
-//       else res.send("Invalid password  !!!");
-//     }
-//   } catch (err) {
-//     res.send({ message: err });
-//   }
-// });
-
 router.get("/login", async (req, res) => {
   try {
     var userData = await userDB.findOne({ email: req.body.email });
@@ -47,13 +35,22 @@ router.get("/login", async (req, res) => {
         throw err;
       }
 
-      if (data) {
-        userData = userData.toObject();
-        delete userData.password;
-        // we can use this way to delete password from users data
-        // userData.password = undefined;
+      // if (data) {
+      //   userData = userData.toObject();
+      //   delete userData.password;
 
-        res.send(userData);
+      //   // we can use this way to delete password from users data
+      //   // userData.password = undefined;
+
+      //   res.send(userData);
+      // }
+
+      if (data) {
+        jwt.sign({ userData }, secretKey, { expiresIn: "1h" }, (err, token) => {
+          res.json({
+            token,
+          });
+        });
       } else {
         // response is OutgoingMessage object that server response http request
         return res.json({ message: "passwords do not match" });
@@ -62,6 +59,32 @@ router.get("/login", async (req, res) => {
   } catch (err) {
     res.send({ message: err });
   }
+});
+
+function verifyToken(req, res, next) {
+  const bearedHeader = req.headers["authorization"];
+
+  if (typeof bearedHeader !== undefined) {
+    const bearer = bearedHeader.split(" ");
+    const token = bearer[1];
+
+    req.token = token;
+    next();
+  } else {
+    res.send({ result: "Token not valid" });
+  }
+}
+
+router.post("/profile", verifyToken, (req, res) => {
+
+  jwt.verify(req.token, secretKey, (err, authData) => {
+    if (err) {
+      res.send({ result: "invalid token" });
+    } else {
+      console.log(authData.userData);
+      res.json({ message: "profile accessed", authData });
+    }
+  });
 });
 
 module.exports = router;

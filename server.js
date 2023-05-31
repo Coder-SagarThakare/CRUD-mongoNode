@@ -21,4 +21,3 @@ app.listen(5100, () => {
 // connect node to mongodb
 mongoose.connect(process.env.DB_CONNECTION);
 console.log(process.env.DB_CONNECTION)
-console.log(process.env.DB_CONNECTION)
